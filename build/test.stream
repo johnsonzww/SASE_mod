@@ -1,4 +1,4 @@
-streamSize = 100000
+streamSize = 1000
 maxPrice = 1000
 numOfSymbol = 2
 maxVolume = 1000

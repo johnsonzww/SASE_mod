@@ -30,7 +30,7 @@ package edu.umass.cs.sase.stream;
  * @author haopeng
  *
  */
-public class ABCEvent implements Event{
+public class ABCEvent implements CTEvent{
 	/**
 	 * Event id
 	 */
@@ -40,6 +40,8 @@ public class ABCEvent implements Event{
 	 * Event timestamp
 	 */
 	int timestamp;
+	int endTimestamp;
+	int durationTime;
 	
 	/**
 	 * event type
@@ -54,12 +56,22 @@ public class ABCEvent implements Event{
 	/**
 	 * Constructor
 	 */
-	public  ABCEvent(int i, int ts, String et, int p){
+	public  ABCEvent(int i, int ts, String et, int p, int ets, int dt){
 		id = i;
 		timestamp = ts;
 		eventType = et;
 		price = p;
-		
+		endTimestamp = ets;
+		durationTime = dt;
+	}
+
+	public  ABCEvent(int i, int ts, String et, int p, int ets){
+		id = i;
+		timestamp = ts;
+		eventType = et;
+		price = p;
+		endTimestamp = ets;
+		durationTime = endTimestamp - timestamp;
 	}
 	
 	/**
@@ -176,12 +188,13 @@ public class ABCEvent implements Event{
 	}
 
 
+	@Override
+	public int getDurationTime() {
+		return durationTime;
+	}
 
-
-
-
-
-	
-	
-
+	@Override
+	public int getEndTimestamp() {
+		return endTimestamp;
+	}
 }

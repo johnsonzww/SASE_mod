@@ -33,7 +33,7 @@ public class StockStreamConfig {
 	/**
 	 * 
 	 */
-	public static int streamSize = 10000;
+	public static int streamSize = 10;
 	
 	/**
 	 * Denoting the max price value, so the price range is: [1, maxPrice]
@@ -62,6 +62,8 @@ public class StockStreamConfig {
 	 */
 	
 	public static int increaseProbability = 101; //%
+
+	public static int timeout = 10;
 	
 	/**
 	 * Prints the configuration

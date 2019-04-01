@@ -200,7 +200,7 @@ public class PredicateOptimized {
 			this.logicalOperator = "<";
 			this.parseLeftRight("<");
 		}else{
-		
+
 			System.exit(0);
 		}
 	}

@@ -30,8 +30,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
-
 import edu.umass.cs.sase.engine.ConfigFlags;
+
 
 
 /**
@@ -263,10 +263,11 @@ public class NFA {
             st.nextToken();
             this.selectionStrategy = st.nextToken().trim();
         } else if (line.startsWith("AND")) {
-            if(line.contains("OR")){
-
+            if(line.contains(" OR ") || line.contains(" or ")){
+                this.parseFastQueryLineContainsOR(line);
+            }else {
+                this.parseFastQueryLineStartWithAND(line);
             }
-            this.parseFastQueryLineStartWithAND(line);
         } else if (line.startsWith("WITHIN")) {
             // parse the time window
             StringTokenizer st = new StringTokenizer(line);
@@ -347,6 +348,24 @@ public class NFA {
 
     }
 
+    public void parseFastQueryLineContainsOR(String line){
+        int stateNum = selectStateNumWithOR(line);
+        this.states[stateNum].addPredicateWithOR(line);
+    }
+
+    private int selectStateNumWithOR(String line){
+        String[] predicates = line.split("AND|OR");
+        int large = 0;
+        for(String predicate:predicates){
+            if(predicate.equals("")){
+                continue;
+            }
+            int temp = selectStateNum(predicate);
+            large = temp>large?temp:large;
+        }
+        return large;
+    }
+
     private int selectStateNum(String line) {
         String[] tokens = line.split(">|<|=");
         String first = tokens[0].trim();
@@ -359,6 +378,8 @@ public class NFA {
             return firstC-lastC > 0?firstC-'a':lastC-'a';
         }
     }
+
+
 
     /**
      * Adds other partition attributes except for the first to each state

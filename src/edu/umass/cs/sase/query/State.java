@@ -143,6 +143,33 @@ public class State {
         //System.out.println("A new predicate is added to this state: " + this.tag);
         //System.out.println(pDescription);
         // a predicate should be composed of 3 parts: left operator right
+        String p = parsePredicate(pDescription, reverse);
+
+        int edgeNumber = this.parseEdgeNumber(pDescription.split(" \t\n\r\f")[0]);
+        this.edges[edgeNumber].addPredicate(p);
+        //System.out.println("predicate after parsing is:" + p);
+
+
+    }
+
+    public void addPredicateWithOR(String line){
+        String[] predicates = line.split("AND|OR");
+        StringBuilder stringBuilder = new StringBuilder();
+        int edgeNumber = 0;
+        for(String predicate:predicates){
+            if(predicate.equals("")){
+                continue;
+            }
+            boolean reverse = checkReverse(predicate.trim());
+            String p = parsePredicate(predicate, reverse);
+            edgeNumber = this.parseEdgeNumber(p.split(" \t\n\r\f")[0])==1?1:edgeNumber;
+            stringBuilder.append(p.trim());
+            stringBuilder.append(" OR ");
+        }
+        this.edges[edgeNumber].addPredicate(stringBuilder.toString(), true);
+    }
+
+    private String parsePredicate(String pDescription , boolean reverse){
         StringTokenizer st = new StringTokenizer(pDescription);
         int size = st.countTokens();
         String left = st.nextToken();
@@ -160,7 +187,7 @@ public class State {
             left = right;
             right = temp;
         }
-        int edgeNumber = this.parseEdgeNumber(left);
+
 
         //System.out.println("right=" + right);
         String newLeft = this.replaceLeftStateNumber(left);
@@ -169,10 +196,14 @@ public class State {
 
         String p = pDescription.replace(left, newLeft);
         p = p.replace(right, newRight);
-        this.edges[edgeNumber].addPredicate(p);
-        //System.out.println("predicate after parsing is:" + p);
+        return p;
+    }
 
-
+    private boolean checkReverse(String line){
+        int first = line.charAt(0);
+        String[] tokens = line.split(" ");
+        int last = tokens[tokens.length-1].charAt(0);
+        return first<last;
     }
 
     /**

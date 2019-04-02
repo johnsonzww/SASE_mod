@@ -99,22 +99,64 @@ public class PredicateOptimized {
 	 * Operands that contain variables
 	 */
 	ArrayList<Operand> varOperands;
+
+	String[] descriptions;
+	Boolean hasOR = false;
 	/**
 	 * Default constructor
 	 * @param pre the description of a predicate
 	 */
+	public PredicateOptimized(String pre, boolean hasOR){
+		this.hasOR = hasOR;
+		if(hasOR){
+			this.predicateOptWithOr(pre);
+		}else {
+			this.predicateOptWithOutOr(pre);
+		}
+	}
 	public PredicateOptimized(String pre){
+		this.predicateOptWithOutOr(pre);
+	}
+
+	private void predicateOptWithOutOr(String pre){
 		this.evl = new Evaluator();
-		
+
 		this.predicateDescription = pre.trim();
 		this.leftOperands = new ArrayList<Operand>();
 		this.rightOperands = new ArrayList<Operand>();
-		
-		this.parsePredicate();
+
+		this.parsePredicate(this.predicateDescription);
 		this.formatPredicate();
-		this.linkAggregationOperand();		
+		this.linkAggregationOperand();
 		this.checkSingle();
-		
+	}
+
+	private void predicateOptWithOr(String pre){
+		this.evl = new Evaluator();
+		this.predicateDescription = pre.trim();
+		this.descriptions = parseDescription(pre);
+		this.leftOperands = new ArrayList<Operand>();
+		this.rightOperands = new ArrayList<Operand>();
+		for(String des:this.descriptions){
+			parsePredicate(des);
+		}
+		this.formatPredicate();
+		this.linkAggregationOperand();
+		this.checkSingle();
+	}
+
+	public String[] parseDescription(String pre){
+		ArrayList<String> result = new ArrayList<>();
+		String[] des = pre.split("or|OR");
+		for (String description:des) {
+		    if(description.trim().equals("")){
+		        continue;
+            }
+			result.add(description.trim());
+		}
+		String[] res = new String[result.size()];
+        result.toArray(res);
+		return res;
 	}
 	/**
 	 * Deals with the aggregation operand
@@ -177,28 +219,28 @@ public class PredicateOptimized {
 	/**
 	 * Parses the predicate
 	 */
-	public void parsePredicate(){
-		if(this.predicateDescription.contains(">=")){
+	public void parsePredicate(String des){
+		if(des.contains(">=")){
 			this.logicalOperator = ">=";
-			this.parseLeftRight(">=");
-		}else if(this.predicateDescription.contains("<=")){
+			this.parseLeftRight(">=", des);
+		}else if(des.contains("<=")){
 			this.logicalOperator = "<=";
-			this.parseLeftRight("<=");
-		}else if(this.predicateDescription.contains("!=")){
+			this.parseLeftRight("<=", des);
+		}else if(des.contains("!=")){
 			this.logicalOperator = "!=";
-			this.parseLeftRight("!=");
-		}else if(this.predicateDescription.contains("==")){
+			this.parseLeftRight("!=", des);
+		}else if(des.contains("==")){
 			this.logicalOperator = "==";
-			this.parseLeftRight("==");
-		}else if(this.predicateDescription.contains("=")){
+			this.parseLeftRight("==", des);
+		}else if(des.contains("=")){
 			this.logicalOperator = "==";
-			this.parseLeftRight("=");
-		}else if(this.predicateDescription.contains(">")){
+			this.parseLeftRight("=", des);
+		}else if(des.contains(">")){
 			this.logicalOperator = ">";
-			this.parseLeftRight(">");
-		}else if(this.predicateDescription.contains("<")){
+			this.parseLeftRight(">", des);
+		}else if(des.contains("<")){
 			this.logicalOperator = "<";
-			this.parseLeftRight("<");
+			this.parseLeftRight("<", des);
 		}else{
 
 			System.exit(0);
@@ -208,10 +250,10 @@ public class PredicateOptimized {
 	 * Parses left or right part of the predicate
 	 * @param logicOperation the logic operator of this predicate
 	 */
-	public void parseLeftRight(String logicOperation){
+	public void parseLeftRight(String logicOperation, String des){
 		
 
-		StringTokenizer st = new StringTokenizer(this.predicateDescription, logicOperation);
+		StringTokenizer st = new StringTokenizer(des, logicOperation);
 		String left = st.nextToken();
 		String right = st.nextToken();
 		this.parseLeftOperand(left);

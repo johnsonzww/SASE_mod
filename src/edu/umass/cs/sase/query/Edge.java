@@ -93,6 +93,15 @@ public class Edge {
 			this.predicates = newPredicates;
 		
 	}
+
+	public void addPredicate(String predicateDescription, boolean hasOR){
+		PredicateOptimized[] newPredicates = new PredicateOptimized[this.predicates.length + 1];
+		for(int i = 0; i < this.predicates.length; i ++){
+			newPredicates[i] = this.predicates[i];
+		}
+		newPredicates[newPredicates.length - 1] = new PredicateOptimized(predicateDescription, hasOR);
+		this.predicates = newPredicates;
+	}
 	
 	/**
 	 * Evaluates an event on this edge

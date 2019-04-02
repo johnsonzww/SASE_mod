@@ -1,7 +1,6 @@
 PATTERN SEQ(stock a, stock b, stock c)
 WHERE  skip-till-next-match
 HAVING equals(b,a)
-AND a.symbol = 2
-AND b.price < a.price
+AND a.symbol = 2 OR a.price < 100
 AND c.volume < 150
 WITHIN 500

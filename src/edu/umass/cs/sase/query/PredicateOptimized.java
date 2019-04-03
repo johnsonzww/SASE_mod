@@ -52,7 +52,7 @@ public class PredicateOptimized {
 	/**
 	 * The logical operator in this predicate, one of {>, < , >=, <=, !=, =}
 	 */
-	String logicalOperator;
+	ArrayList<String> logicalOperator;
 	
 	/**
 	 * The operands on the left side of the logical operator
@@ -124,6 +124,7 @@ public class PredicateOptimized {
 		this.predicateDescription = pre.trim();
 		this.leftOperands = new ArrayList<Operand>();
 		this.rightOperands = new ArrayList<Operand>();
+		this.logicalOperator = new ArrayList<String>();
 
 		this.parsePredicate(this.predicateDescription);
 		this.formatPredicate();
@@ -137,6 +138,7 @@ public class PredicateOptimized {
 		this.descriptions = parseDescription(pre);
 		this.leftOperands = new ArrayList<Operand>();
 		this.rightOperands = new ArrayList<Operand>();
+        this.logicalOperator = new ArrayList<String>();
 		for(String des:this.descriptions){
 			parsePredicate(des);
 		}
@@ -191,24 +193,44 @@ public class PredicateOptimized {
 	 * Format the description for evaluation
 	 */
 	public void formatPredicate(){
+
 		this.varOperands = new ArrayList<Operand>();
 		StringBuilder sb = new StringBuilder();
 		Operand temp;
-		for(int i = 0; i < this.leftOperands.size(); i ++){
-			temp = this.leftOperands.get(i);
-			if(!temp.operandType.equalsIgnoreCase("nonVar")){
-				this.varOperands.add(temp);
-			}
-			sb.append(temp.formatedRepresentation);
-		}
-		sb.append(this.logicalOperator);
-		for(int i = 0; i < this.rightOperands.size(); i ++){
-			temp = this.rightOperands.get(i);
-			if(!temp.operandType.equalsIgnoreCase("nonVar")){
-				this.varOperands.add(temp);
-			}
-			sb.append(temp.formatedRepresentation);
-		}
+		if(!hasOR) {
+            for (int i = 0; i < this.leftOperands.size(); i++) {
+                temp = this.leftOperands.get(i);
+                if (!temp.operandType.equalsIgnoreCase("nonVar")) {
+                    this.varOperands.add(temp);
+                }
+                sb.append(temp.formatedRepresentation);
+            }
+            sb.append(this.logicalOperator.get(0));
+            for (int i = 0; i < this.rightOperands.size(); i++) {
+                temp = this.rightOperands.get(i);
+                if (!temp.operandType.equalsIgnoreCase("nonVar")) {
+                    this.varOperands.add(temp);
+                }
+                sb.append(temp.formatedRepresentation);
+            }
+        }else{
+		    for (int i = 0; i<this.leftOperands.size() && i<this.rightOperands.size(); i++){
+                temp = this.leftOperands.get(i);
+                if (!temp.operandType.equalsIgnoreCase("nonVar")) {
+                    this.varOperands.add(temp);
+                }
+                sb.append(temp.formatedRepresentation);
+                sb.append(this.logicalOperator.get(i));
+                temp = this.rightOperands.get(i);
+                if (!temp.operandType.equalsIgnoreCase("nonVar")) {
+                    this.varOperands.add(temp);
+                }
+                sb.append(temp.formatedRepresentation);
+                if(i<this.leftOperands.size()-1 && i<this.rightOperands.size()-1){
+                    sb.append("||");
+                }
+            }
+        }
 		
 		this.formatedPredicate = sb.toString();
 		
@@ -221,25 +243,25 @@ public class PredicateOptimized {
 	 */
 	public void parsePredicate(String des){
 		if(des.contains(">=")){
-			this.logicalOperator = ">=";
+			this.logicalOperator.add(">=");
 			this.parseLeftRight(">=", des);
 		}else if(des.contains("<=")){
-			this.logicalOperator = "<=";
+			this.logicalOperator.add("<=");
 			this.parseLeftRight("<=", des);
 		}else if(des.contains("!=")){
-			this.logicalOperator = "!=";
+			this.logicalOperator.add("!=");
 			this.parseLeftRight("!=", des);
 		}else if(des.contains("==")){
-			this.logicalOperator = "==";
+			this.logicalOperator.add("==");
 			this.parseLeftRight("==", des);
 		}else if(des.contains("=")){
-			this.logicalOperator = "==";
+			this.logicalOperator.add("==");
 			this.parseLeftRight("=", des);
 		}else if(des.contains(">")){
-			this.logicalOperator = ">";
+			this.logicalOperator.add(">");
 			this.parseLeftRight(">", des);
 		}else if(des.contains("<")){
-			this.logicalOperator = "<";
+			this.logicalOperator.add("<");
 			this.parseLeftRight("<", des);
 		}else{
 
@@ -343,25 +365,25 @@ public class PredicateOptimized {
 	 */
 	public boolean evaluate(Event currentEvent, Event previousEvent) throws EvaluationException{
 
-		
-		for(int i = 0; i < this.varOperands.size(); i ++){
-			tempOperand = this.varOperands.get(i);
-			tempAttributeName = tempOperand.getAttribute();
-			if(tempOperand.hasRelatedState && tempOperand.relatedState.equalsIgnoreCase("$previous")){
-				if(tempOperand.relatedState.equalsIgnoreCase("$previous")){
-				
-				evl.putVariable(tempOperand.getOriginalRepresentation(), ""+previousEvent.getAttributeByName(tempAttributeName));
-				}
-			}else {
-				evl.putVariable(tempOperand.getOriginalRepresentation(), ""+currentEvent.getAttributeByName(tempAttributeName));
-			}
-		}
-		
+            for (int i = 0; i < this.varOperands.size(); i++) {
+                tempOperand = this.varOperands.get(i);
+                tempAttributeName = tempOperand.getAttribute();
+                if (tempOperand.hasRelatedState && tempOperand.relatedState.equalsIgnoreCase("$previous")) {
+                    if (tempOperand.relatedState.equalsIgnoreCase("$previous")) {
 
-		if("1.0".equalsIgnoreCase( evl.evaluate(this.formatedPredicate)))
-		   return true;
-		else
-			return false;
+                        evl.putVariable(tempOperand.getOriginalRepresentation(), "" + previousEvent.getAttributeByName(tempAttributeName));
+                    }
+                } else {
+                    evl.putVariable(tempOperand.getOriginalRepresentation(), "" + currentEvent.getAttributeByName(tempAttributeName));
+                }
+            }
+
+
+            if ("1.0".equalsIgnoreCase(evl.evaluate(this.formatedPredicate)))
+                return true;
+            else
+                return false;
+
 	}
 	/**
 	 * Evaluates an event against the predicate
@@ -382,7 +404,7 @@ public class PredicateOptimized {
 				if(tempOperand.getRelatedState().equalsIgnoreCase("$previous")){
 					int eventId = r.getPreviousEventId();
 					int value = b.getEvent(eventId).getAttributeByName(tempAttributeName);
-					
+
 					evl.putVariable(tempOperand.getOriginalRepresentation(), ""+b.getEvent(eventId).getAttributeByName(tempAttributeName));
 				}
 			}else{
@@ -395,9 +417,6 @@ public class PredicateOptimized {
 				evl.putVariable(tempOperand.getOriginalRepresentation(), ""+r.getNeededValueVector(stateNumber - 1, tempAttributeName, tempOperand.getAggregation()));
 			}
 			}
-		
-		
-		
 
 		if("1.0".equalsIgnoreCase( evl.evaluate(this.formatedPredicate)))
 		   return true;
@@ -428,18 +447,18 @@ public class PredicateOptimized {
 	public void setFormatedPredicate(String formatedPredicate) {
 		this.formatedPredicate = formatedPredicate;
 	}
-	/**
-	 * @return the logicalOperator
-	 */
-	public String getLogicalOperator() {
-		return logicalOperator;
-	}
-	/**
-	 * @param logicalOperator the logicalOperator to set
-	 */
-	public void setLogicalOperator(String logicalOperator) {
-		this.logicalOperator = logicalOperator;
-	}
+//	/**
+//	 * @return the logicalOperator
+//	 */
+//	public String getLogicalOperator() {
+//		return logicalOperator;
+//	}
+//	/**
+//	 * @param logicalOperator the logicalOperator to set
+//	 */
+//	public void setLogicalOperator(String logicalOperator) {
+//		this.logicalOperator = logicalOperator;
+//	}
 
 	/**
 	 * @return the leftOperands

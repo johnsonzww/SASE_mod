@@ -166,6 +166,8 @@ public class State {
             stringBuilder.append(p.trim());
             stringBuilder.append(" OR ");
         }
+        int st = stringBuilder.lastIndexOf(" OR ");
+        stringBuilder.delete(st, stringBuilder.lastIndexOf(" "));
         this.edges[edgeNumber].addPredicate(stringBuilder.toString(), true);
     }
 

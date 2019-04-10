@@ -29,9 +29,11 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.StringTokenizer;
-import edu.umass.cs.sase.engine.ConfigFlags;
 
+import edu.umass.cs.sase.engine.ConfigFlags;
 
 
 /**
@@ -101,6 +103,9 @@ public class NFA {
      */
     State negationState;
 
+    Map<Character, String> nameMap;
+    Map<String, Integer> orderMap;
+
     /**
      * Constructs an NFA from a file
      *
@@ -166,13 +171,31 @@ public class NFA {
             } else if (line.startsWith("PATTERN")) {
                 // parse the simpler format
                 this.morePartitionAttribute = new ArrayList<String>();
+                this.nameMap = new HashMap<>();
+                this.orderMap = new HashMap<>();
                 this.hasMorePartitionAttribute = false;
+                this.parseFastQueryLine(line);
                 do {
                     if (line.startsWith("HAVING")) {
+                        sortName(line.split(" ", 2)[1]);
+                    }
+                } while ((line = br.readLine()) != null);
+                sortState();
+
+                br = new BufferedReader(new FileReader(nfaFile));
+                while (!(line = br.readLine()).startsWith("PATTERN")) ;
+                line = br.readLine();
+                do {
+                    if (line.startsWith("HAVING")) {
+                        line = changeNameForHaving(line);
                         String token = line.split(" ", 2)[1];
                         parseHaving(token);
+                    } else {
+                        if(!nameMap.isEmpty()) {
+                            line = changeName(line);
+                        }
+                        this.parseFastQueryLine(line);
                     }
-                    this.parseFastQueryLine(line);
                 }
                 while ((line = br.readLine()) != null);
                 if (this.hasMorePartitionAttribute) {
@@ -199,54 +222,184 @@ public class NFA {
 
     public void parseHaving(String line) {
         String parseLine = "";
-        if(!line.matches(".*\\((.*),(.*)\\)")){
+        if (!line.matches(".*\\((.*),(.*)\\)")) {
             return;
         }
         String[] tokenList = line.split("\\(|\\)|,");
-        String token_1 = tokenList[1].trim();;
+        String token_1 = tokenList[1].trim();
         String token_2 = tokenList[2].trim();
+//        Character key_1 = 'a';
+//        Character key_2 = 'a';
+//        for(Character key: nameMap.keySet()){
+//            String value = nameMap.get(key);
+//            if(value.equals(token_1)){
+//                key_1 = key;
+//            }else if(value.equals(token_2)){
+//                key_2 = key;
+//            }
+//        }
+//        if(key_1>key_2){
+//            changeNameMap(key_1,key_2);
+//        }
+
         if (line.matches("separate\\((.*),(.*)\\)")) {
             parseLine = "AND " + token_2 + ".timestamp > " + token_1 + ".endTimestamp";
             this.parseFastQueryLine(parseLine);
         } else if (line.matches("meets\\((.*),(.*)\\)")) {
             parseLine = "AND " + token_1 + ".endTimestamp = " + token_2 + ".timestamp";
             this.parseFastQueryLine(parseLine);
-        }else if(line.matches("overlaps\\((.*),(.*)\\)")){
+        } else if (line.matches("overlaps\\((.*),(.*)\\)")) {
             // 1.s < 2.s <1.e < 2.e
-            parseLine = "AND " + token_1 + ".timestamp < " + token_2  + ".timestamp\n";
-            parseLine += "AND " + token_2 + ".timestamp < " + token_1  + ".endTimestamp\n";
-            parseLine += "AND " + token_1 + ".endTimestamp < " + token_2  + ".endTimestamp\n";
+            parseLine = "AND " + token_1 + ".timestamp < " + token_2 + ".timestamp\n";
+            parseLine += "AND " + token_2 + ".timestamp < " + token_1 + ".endTimestamp\n";
+            parseLine += "AND " + token_1 + ".endTimestamp < " + token_2 + ".endTimestamp\n";
             this.parseMultiLine(parseLine);
-        }else if(line.matches("starts\\((.*),(.*)\\)")){
+        } else if (line.matches("starts\\((.*),(.*)\\)")) {
             // 1.s = 2.s < 1.e < 2.e
-            parseLine = "AND " + token_1 + ".timestamp = " + token_2  + ".timestamp\n";
-            parseLine += "AND " + token_1 + ".endTimestamp < " + token_2  + ".endTimestamp\n";
+            parseLine = "AND " + token_1 + ".timestamp = " + token_2 + ".timestamp\n";
+            parseLine += "AND " + token_1 + ".endTimestamp < " + token_2 + ".endTimestamp\n";
             parseLine += "AND " + token_1 + ".durationTime > 0";
             this.parseMultiLine(parseLine);
-        }else if(line.matches("during\\((.*),(.*)\\)")){
+        } else if (line.matches("during\\((.*),(.*)\\)")) {
             // 1.s<2.s<2.e<1.e
-            parseLine = "AND " + token_1 + ".timestamp < " + token_2  + ".timestamp\n";
-            parseLine += "AND " + token_1 + ".endTimestamp > " + token_2  + ".endTimestamp";
+            parseLine = "AND " + token_1 + ".timestamp < " + token_2 + ".timestamp\n";
+            parseLine += "AND " + token_1 + ".endTimestamp > " + token_2 + ".endTimestamp";
             this.parseMultiLine(parseLine);
 
-        }else if(line.matches("ends\\((.*),(.*)\\)")){
+        } else if (line.matches("ends\\((.*),(.*)\\)")) {
             // 2.s<1.s<2.e=1.e
-            parseLine = "AND " + token_1 + ".timestamp > " + token_2  + ".timestamp\n";
-            parseLine += "AND " + token_1 + ".endTimestamp = " + token_2  + ".endTimestamp\n";
+            parseLine = "AND " + token_1 + ".timestamp > " + token_2 + ".timestamp\n";
+            parseLine += "AND " + token_1 + ".endTimestamp = " + token_2 + ".endTimestamp\n";
             this.parseMultiLine(parseLine);
-        }else if(line.matches("equals\\((.*),(.*)\\)")){
+        } else if (line.matches("equals\\((.*),(.*)\\)")) {
             // 1.s = 2.s and 1.e = 2.e
-            parseLine = "AND " + token_2 + ".endTimestamp = " + token_1  + ".endTimestamp\n";
-            parseLine += "AND " + token_2 + ".timestamp = " + token_1  + ".timestamp\n";
+            parseLine = "AND " + token_2 + ".endTimestamp = " + token_1 + ".endTimestamp\n";
+            parseLine += "AND " + token_2 + ".timestamp = " + token_1 + ".timestamp\n";
             this.parseMultiLine(parseLine);
         }
     }
 
-    private void parseMultiLine(String line){
+    private void sortName(String line) {
+        if (!line.matches(".*\\((.*),(.*)\\)")) {
+            return;
+        }
+        String[] tokenList = line.split("\\(|\\)|,");
+        String token_1 = tokenList[1].trim();
+        String token_2 = tokenList[2].trim();
+        Character key_1 = 'a';
+        Character key_2 = 'a';
+        for (Character key : nameMap.keySet()) {
+            String value = nameMap.get(key);
+            if (value.equals(token_1)) {
+                key_1 = key;
+            } else if (value.equals(token_2)) {
+                key_2 = key;
+            }
+        }
+
+        if (line.matches("separate\\((.*),(.*)\\)") || line.matches("meets\\((.*),(.*)\\)") ||
+                line.matches("overlaps\\((.*),(.*)\\)") || line.matches("starts\\((.*),(.*)\\)")) {
+            // 1.e < 2.e
+            if (key_1 > key_2) {
+                orderMap.replace(token_1, orderMap.get(token_2) - 1);
+            }
+        } else if (line.matches("during\\((.*),(.*)\\)")) {
+            // 1.s<2.s<2.e<1.e a,b change->b,a
+            if (key_1 < key_2) {
+                orderMap.replace(token_2, orderMap.get(token_1) - 1);
+            }
+        } else if (line.matches("equals\\((.*),(.*)\\)") || line.matches("ends\\((.*),(.*)\\)")) {
+            // 1.s = 2.s and 1.e = 2.e
+
+        }
+
+    }
+
+    private void parseMultiLine(String line) {
         String[] sline = line.split("\n");
-        for(String parseLine:sline){
+        for (String parseLine : sline) {
             this.parseFastQueryLine(parseLine.trim());
         }
+    }
+
+    private void sortState() {
+        String[] name = new String[states.length];
+        Integer[] value = new Integer[states.length];
+        int count = 0;
+        for (String key : orderMap.keySet()) {
+            name[count] = key;
+            value[count] = orderMap.get(key);
+            count++;
+        }
+        for (int i = 0; i < value.length - 1; i++) {
+            for (int j = 0; j < value.length - i - 1; j++) {
+                if (value[j] > value[j + 1]) {
+
+                    int tempV = value[j];
+                    value[j] = value[j + 1];
+                    value[j + 1] = tempV;
+
+                    String tempN = name[j];
+                    name[j] = name[j + 1];
+                    name[j+1] = tempN;
+
+                    State tempS = states[j];
+                    states[j] = states[j+1];
+                    states[j+1] = tempS;
+                }
+            }
+        }
+        count = 0;
+        for(Character key:nameMap.keySet()){
+            nameMap.replace(key, name[count]);
+            states[count].tag = key.toString();
+            count++;
+        }
+    }
+
+//    private void changeNameMap(Character key_1, Character key_2) {
+//        String temp = nameMap.get(key_1);
+//        nameMap.replace(key_1, nameMap.get(key_2));
+//        nameMap.replace(key_2, temp);
+//    }
+
+    private String changeNameForHaving(String line) {
+        String before = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
+        StringBuilder sb = new StringBuilder();
+        for(Character value:before.toCharArray()){
+            if(nameMap.containsValue(value.toString())){
+                for(char key: nameMap.keySet()){
+                    if(nameMap.get(key).equals(value.toString())){
+                        sb.append(key);
+                        break;
+                    }
+                }
+            }else{
+                sb.append(value);
+            }
+        }
+        String after = sb.toString();
+
+        return line.replace(before,after);
+
+    }
+
+    private String changeName(String line) {
+        char[] characters = line.toCharArray();
+        StringBuilder sb = new StringBuilder();
+        for(int i = 0; i<characters.length;i++){
+            if(i!=(characters.length-1)&&characters[i+1]=='.'&&nameMap.containsValue((new Character(characters[i])).toString())){
+                for(char key: nameMap.keySet()){
+                    if(nameMap.get(key).equals((new Character(characters[i])).toString())){
+                        sb.append(key);
+                        break;
+                    }
+                }
+            }else {
+                sb.append(characters[i]);
+            }
+        }
+        return sb.toString();
     }
 
     /**
@@ -263,9 +416,9 @@ public class NFA {
             st.nextToken();
             this.selectionStrategy = st.nextToken().trim();
         } else if (line.startsWith("AND")) {
-            if(line.contains(" OR ") || line.contains(" or ")){
+            if (line.contains(" OR ") || line.contains(" or ")) {
                 this.parseFastQueryLineContainsOR(line);
-            }else {
+            } else {
                 this.parseFastQueryLineStartWithAND(line);
             }
         } else if (line.startsWith("WITHIN")) {
@@ -298,6 +451,8 @@ public class NFA {
             StringTokenizer stateSt = new StringTokenizer(state);
             String eventType = stateSt.nextToken().trim();
             String stateTag = stateSt.nextToken().trim();
+            nameMap.put((char) ('a' + i), stateTag);
+            orderMap.put(stateTag, 0);
             if (eventType.contains("+")) {
                 isKleeneClosure = true;
                 eventType = eventType.substring(0, eventType.length() - 1);// the first letter
@@ -348,20 +503,20 @@ public class NFA {
 
     }
 
-    public void parseFastQueryLineContainsOR(String line){
+    public void parseFastQueryLineContainsOR(String line) {
         int stateNum = selectStateNumWithOR(line);
         this.states[stateNum].addPredicateWithOR(line);
     }
 
-    private int selectStateNumWithOR(String line){
+    private int selectStateNumWithOR(String line) {
         String[] predicates = line.split("AND|OR");
         int large = 0;
-        for(String predicate:predicates){
-            if(predicate.equals("")){
+        for (String predicate : predicates) {
+            if (predicate.equals("")) {
                 continue;
             }
             int temp = selectStateNum(predicate);
-            large = temp>large?temp:large;
+            large = temp > large ? temp : large;
         }
         return large;
     }
@@ -372,13 +527,12 @@ public class NFA {
         String last = tokens[tokens.length - 1].trim();
         char firstC = first.toLowerCase().charAt(0);
         char lastC = last.toLowerCase().charAt(0);
-        if (!('a' <= lastC && 'z' >= lastC)){
-            return firstC-'a';
-        }else {
-            return firstC-lastC > 0?firstC-'a':lastC-'a';
+        if (!('a' <= lastC && 'z' >= lastC)) {
+            return firstC - 'a';
+        } else {
+            return firstC - lastC > 0 ? firstC - 'a' : lastC - 'a';
         }
     }
-
 
 
     /**

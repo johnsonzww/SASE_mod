@@ -149,7 +149,7 @@ public class StreamController {
      */
     public void generateStockEventsWithIncreaseProbability() {
 
-        Random r = new Random();
+        Random r = new Random(10);
         ArrayList<StockEvent> stockEvents = new ArrayList<>();
         StockEvent events[] = new StockEvent[this.size];
         int id;

@@ -85,9 +85,17 @@ public class Match {
 		String temp = "";
 		//temp += "This is a match for this query:\n:";
 		//temp += this.nfa.toString();
+		temp += "components order is:";
+		for(String name: nfa.nameMap.values()){
+			temp += name;
+			temp += ",";
+		}
+		temp += "\n";
 		temp += "\nThis match has selected the following events: \n\n";
+
 		if(this.events != null){
 			for(int i = 0; i < this.events.length; i ++){
+
 				temp += this.events[i].toString() +"\n";
 				}
 		}else if(this.eventList.size() > 0){

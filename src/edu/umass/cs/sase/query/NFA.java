@@ -103,7 +103,7 @@ public class NFA {
      */
     State negationState;
 
-    Map<Character, String> nameMap;
+    public Map<Character, String> nameMap;
     Map<String, Integer> orderMap;
 
     /**
@@ -228,53 +228,33 @@ public class NFA {
         String[] tokenList = line.split("\\(|\\)|,");
         String token_1 = tokenList[1].trim();
         String token_2 = tokenList[2].trim();
-//        Character key_1 = 'a';
-//        Character key_2 = 'a';
-//        for(Character key: nameMap.keySet()){
-//            String value = nameMap.get(key);
-//            if(value.equals(token_1)){
-//                key_1 = key;
-//            }else if(value.equals(token_2)){
-//                key_2 = key;
-//            }
-//        }
-//        if(key_1>key_2){
-//            changeNameMap(key_1,key_2);
-//        }
 
-        if (line.matches("separate\\((.*),(.*)\\)")) {
-            parseLine = "AND " + token_2 + ".timestamp > " + token_1 + ".endTimestamp";
+
+        if (line.matches("before\\((.*),(.*)\\)")) {
+            parseLine = TimeRelation.setToken(TimeRelation.BEFORE, token_1, token_2);
             this.parseFastQueryLine(parseLine);
         } else if (line.matches("meets\\((.*),(.*)\\)")) {
-            parseLine = "AND " + token_1 + ".endTimestamp = " + token_2 + ".timestamp";
+            parseLine = TimeRelation.setToken(TimeRelation.MEETS, token_1, token_2);
             this.parseFastQueryLine(parseLine);
         } else if (line.matches("overlaps\\((.*),(.*)\\)")) {
+            parseLine = TimeRelation.setToken(TimeRelation.OVERLAPS, token_1, token_2);
             // 1.s < 2.s <1.e < 2.e
-            parseLine = "AND " + token_1 + ".timestamp < " + token_2 + ".timestamp\n";
-            parseLine += "AND " + token_2 + ".timestamp < " + token_1 + ".endTimestamp\n";
-            parseLine += "AND " + token_1 + ".endTimestamp < " + token_2 + ".endTimestamp\n";
             this.parseMultiLine(parseLine);
         } else if (line.matches("starts\\((.*),(.*)\\)")) {
             // 1.s = 2.s < 1.e < 2.e
-            parseLine = "AND " + token_1 + ".timestamp = " + token_2 + ".timestamp\n";
-            parseLine += "AND " + token_1 + ".endTimestamp < " + token_2 + ".endTimestamp\n";
-            parseLine += "AND " + token_1 + ".durationTime > 0";
+            parseLine = TimeRelation.setToken(TimeRelation.STARTS, token_1, token_2);
             this.parseMultiLine(parseLine);
         } else if (line.matches("during\\((.*),(.*)\\)")) {
             // 1.s<2.s<2.e<1.e
-            parseLine = "AND " + token_1 + ".timestamp < " + token_2 + ".timestamp\n";
-            parseLine += "AND " + token_1 + ".endTimestamp > " + token_2 + ".endTimestamp";
+            parseLine = TimeRelation.setToken(TimeRelation.DURING, token_1, token_2);
             this.parseMultiLine(parseLine);
-
         } else if (line.matches("ends\\((.*),(.*)\\)")) {
             // 2.s<1.s<2.e=1.e
-            parseLine = "AND " + token_1 + ".timestamp > " + token_2 + ".timestamp\n";
-            parseLine += "AND " + token_1 + ".endTimestamp = " + token_2 + ".endTimestamp\n";
+            parseLine = TimeRelation.setToken(TimeRelation.ENDS, token_1, token_2);
             this.parseMultiLine(parseLine);
         } else if (line.matches("equals\\((.*),(.*)\\)")) {
             // 1.s = 2.s and 1.e = 2.e
-            parseLine = "AND " + token_2 + ".endTimestamp = " + token_1 + ".endTimestamp\n";
-            parseLine += "AND " + token_2 + ".timestamp = " + token_1 + ".timestamp\n";
+            parseLine = TimeRelation.setToken(TimeRelation.EQUALS, token_1, token_2);
             this.parseMultiLine(parseLine);
         }
     }
@@ -387,19 +367,17 @@ public class NFA {
     private String changeName(String line) {
         char[] characters = line.toCharArray();
         StringBuilder sb = new StringBuilder();
-        for(int i = 0; i<characters.length;i++){
-            if(i!=(characters.length-1)&&characters[i+1]=='.'&&nameMap.containsValue((new Character(characters[i])).toString())){
+        for(String name: nameMap.values()){
+            if(line.contains(name+".")){
                 for(char key: nameMap.keySet()){
-                    if(nameMap.get(key).equals((new Character(characters[i])).toString())){
-                        sb.append(key);
+                    if(nameMap.get(key).equals(name)){
+                        line = line.replace(name+".", key+".");
                         break;
                     }
                 }
-            }else {
-                sb.append(characters[i]);
             }
         }
-        return sb.toString();
+        return line;
     }
 
     /**

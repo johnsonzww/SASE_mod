@@ -1,6 +1,6 @@
 package edu.umass.cs.sase.stream;
 
-public interface CTEvent extends Event {
+public interface ITEvent extends Event {
     /**
      *
      * return duration time

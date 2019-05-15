@@ -30,7 +30,7 @@ package edu.umass.cs.sase.stream;
  * @author haopeng
  *
  */
-public class ABCEvent implements CTEvent{
+public class ABCEvent implements ITEvent {
 	/**
 	 * Event id
 	 */

@@ -199,7 +199,10 @@ public class StreamController {
         stockEvents.sort(new Comparator<StockEvent>() {
             @Override
             public int compare(StockEvent o1, StockEvent o2) {
-                if (o1.endTimestamp == o2.endTimestamp) return 0;
+                if (o1.endTimestamp == o2.endTimestamp) {
+                    if(o1.timestamp == o2.timestamp) return o1.id < o2.id? -1:1;
+                    return o1.timestamp < o2.timestamp ? -1:1;
+                }
                 return o1.endTimestamp < o2.endTimestamp ? -1 : 1;
             }
         });

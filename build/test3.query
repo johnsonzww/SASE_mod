@@ -1,0 +1,9 @@
+PATTERN (stock testa, stock b, stock c, stock testd)
+WHERE skip-till-next-match
+
+HAVING equals(b,c)
+AND testa.symbol = 1
+AND b.symbol = 2
+AND c.symbol = 2
+AND testd.symbol = 1
+WITHIN 600

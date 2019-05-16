@@ -277,7 +277,7 @@ public class NFA {
             }
         }
 
-        if (line.matches("separate\\((.*),(.*)\\)") || line.matches("meets\\((.*),(.*)\\)") ||
+        if (line.matches("before\\((.*),(.*)\\)") || line.matches("meets\\((.*),(.*)\\)") ||
                 line.matches("overlaps\\((.*),(.*)\\)") || line.matches("starts\\((.*),(.*)\\)")) {
             // 1.e < 2.e
             if (key_1 > key_2) {
@@ -346,21 +346,19 @@ public class NFA {
     private String changeNameForHaving(String line) {
         String before = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
         StringBuilder sb = new StringBuilder();
-        for(Character value:before.toCharArray()){
-            if(nameMap.containsValue(value.toString())){
-                for(char key: nameMap.keySet()){
-                    if(nameMap.get(key).equals(value.toString())){
-                        sb.append(key);
+        String[] splitLine = before.split("\\(|\\)|,");
+        for (String s : splitLine) {
+            if (nameMap.values().contains(s)) {
+                for (Character key : nameMap.keySet()) {
+                    if (nameMap.get(key).equals(s)) {
+                        line = line.replace(s, key.toString());
                         break;
                     }
                 }
-            }else{
-                sb.append(value);
             }
         }
-        String after = sb.toString();
 
-        return line.replace(before,after);
+        return line;
 
     }
 

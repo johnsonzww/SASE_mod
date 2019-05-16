@@ -1,7 +1,0 @@
-PATTERN (stock a, stock b, stock c, stock d)
-WHERE  skip-till-next-match
-HAVING separate(b,a)
-AND a.symbol = 2
-AND a.price < b.price
-AND c.volume < 150
-WITHIN 500

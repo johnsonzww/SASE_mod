@@ -51,8 +51,8 @@ public class CommandLineUI {
      *             3: use sharing techniques or not, ("sharingengine" for use, nothing for not use)
      */
     public static void main(String args[]) throws CloneNotSupportedException, EvaluationException, IOException {
-        String nfaFileLocation = "build/test3.query";
-        String streamConfigFile = "build/test.stream";
+        String nfaFileLocation = "build/test_query_3.query";
+        String streamConfigFile = "build/streamForStockEvent.stream";
 
         String engineType = null;
         if (args.length > 0) {

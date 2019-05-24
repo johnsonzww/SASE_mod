@@ -58,34 +58,6 @@ public class StreamController {
     /**
      * Generates a series of stock events
      */
-    public void generateStockEventsAsConfig() {
-        Random r = new Random(StockStreamConfig.randomSeed);
-        StockEvent events[] = new StockEvent[this.size];
-        int id;
-        int timestamp = 0;
-        int symbol;
-        int volume;
-        int price = r.nextInt(100);
-        int random = 0;
-        int endTimestamp = 0;
-        String eventType = "stock";
-
-
-        for (int i = 0; i < size; i++) {
-            id = i;
-            timestamp = id;
-
-            symbol = r.nextInt(StockStreamConfig.numOfSymbol) + 1;
-            price = r.nextInt(StockStreamConfig.maxPrice) + 1;
-            volume = r.nextInt(StockStreamConfig.maxVolume) + 1;
-            endTimestamp = r.nextInt(StockStreamConfig.timeout) + timestamp;
-
-            events[i] = new StockEvent(id, timestamp, symbol, price, volume, endTimestamp);
-        }
-        myStream.setEvents(events);
-
-
-    }
 
     /**
      * Generates a series of stock events
@@ -224,42 +196,6 @@ public class StreamController {
 
     }
 
-    /**
-     * Generates another batch of stock events
-     *
-     * @param number the size of the stream
-     */
-    public void generateNextStockEvents(int number) {
-
-        StockEvent events[] = new StockEvent[number];
-        int id;
-        int timestamp = 0;
-        int symbol;
-        int volume;
-        int price = this.randomGenerator.nextInt(100);
-        int random = 0;
-        String eventType = "stock";
-
-        for (int i = 0; i < number; i++) {
-            id = this.eventID;
-            timestamp = id;
-            symbol = this.randomGenerator.nextInt(2); //0 or 1
-            random = this.randomGenerator.nextInt(100);
-            if (random < 55) {
-                price += this.randomGenerator.nextInt(5);
-            } else if (random >= 55 && random < 77) {
-                price -= this.randomGenerator.nextInt(5);
-            }
-            volume = this.randomGenerator.nextInt(1000);
-
-            events[i] = new StockEvent(id, timestamp, symbol, price, volume, 0);
-            this.eventID++;
-
-
-        }
-        this.myStream = new Stream(number);
-        myStream.setEvents(events);
-    }
 
     /**
      * Generates ABCEvents for the stream

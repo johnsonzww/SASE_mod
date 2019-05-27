@@ -175,6 +175,7 @@ public class NFA {
                 this.orderMap = new HashMap<>();
                 this.hasMorePartitionAttribute = false;
                 this.parseFastQueryLine(line);
+                //建立名称映射关系
                 do {
                     if (line.startsWith("HAVING")) {
                         sortName(line.split(" ", 2)[1]);
@@ -185,6 +186,7 @@ public class NFA {
                 br = new BufferedReader(new FileReader(nfaFile));
                 while (!(line = br.readLine()).startsWith("PATTERN")) ;
                 line = br.readLine();
+                //创建NFA
                 do {
                     if (line.startsWith("HAVING")) {
                         line = changeNameForHaving(line);
@@ -219,7 +221,7 @@ public class NFA {
     /**
      * temp function
      */
-
+    //将函数名转换成对应的时间关系
     public void parseHaving(String line) {
         String parseLine = "";
         if (!line.matches(".*\\((.*),(.*)\\)")) {
@@ -259,6 +261,10 @@ public class NFA {
         }
     }
 
+    /**
+     * 根据函数的不同，对orderMap进行排序
+     *
+     */
     private void sortName(String line) {
         if (!line.matches(".*\\((.*),(.*)\\)")) {
             return;
@@ -302,6 +308,9 @@ public class NFA {
         }
     }
 
+    /**
+     * 根据映射关系，对创建的状态的顺序进行调整
+     */
     private void sortState() {
         String[] name = new String[states.length];
         Integer[] value = new Integer[states.length];
@@ -343,6 +352,9 @@ public class NFA {
 //        nameMap.replace(key_2, temp);
 //    }
 
+    /**
+     * having 语句的命名替换
+     */
     private String changeNameForHaving(String line) {
         String before = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
         StringBuilder sb = new StringBuilder();
@@ -361,6 +373,10 @@ public class NFA {
         return line;
 
     }
+
+    /**
+     * and 语句的名称替换
+     */
 
     private String changeName(String line) {
         char[] characters = line.toCharArray();

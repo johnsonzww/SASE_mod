@@ -28,10 +28,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.StringTokenizer;
+import java.util.*;
 
 import edu.umass.cs.sase.engine.ConfigFlags;
 
@@ -172,7 +169,7 @@ public class NFA {
                 // parse the simpler format
                 this.morePartitionAttribute = new ArrayList<String>();
                 this.nameMap = new HashMap<>();
-                this.orderMap = new HashMap<>();
+                this.orderMap = new LinkedHashMap<>();
                 this.hasMorePartitionAttribute = false;
                 this.parseFastQueryLine(line);
                 //建立名称映射关系
@@ -272,6 +269,12 @@ public class NFA {
         String[] tokenList = line.split("\\(|\\)|,");
         String token_1 = tokenList[1].trim();
         String token_2 = tokenList[2].trim();
+        if(token_1.contains("[")){
+            token_1=token_1.replaceFirst("\\[(.*)\\]", "");
+        }
+        if(token_2.contains("[")){
+            token_2=token_2.replaceFirst("\\[(.*)\\]", "");
+        }
         Character key_1 = 'a';
         Character key_2 = 'a';
         for (Character key : nameMap.keySet()) {
@@ -360,6 +363,9 @@ public class NFA {
         StringBuilder sb = new StringBuilder();
         String[] splitLine = before.split("\\(|\\)|,");
         for (String s : splitLine) {
+            if(s.contains("[")) {
+                s = s.substring(0, s.indexOf("["));
+            }
             if (nameMap.values().contains(s)) {
                 for (Character key : nameMap.keySet()) {
                     if (nameMap.get(key).equals(s)) {
@@ -386,6 +392,13 @@ public class NFA {
                 for(char key: nameMap.keySet()){
                     if(nameMap.get(key).equals(name)){
                         line = line.replace(name+".", key+".");
+                        break;
+                    }
+                }
+            }else if(line.contains(name+"[")){
+                for(char key: nameMap.keySet()){
+                    if(nameMap.get(key).equals(name)){
+                        line = line.replace(line.substring(line.indexOf(name), line.indexOf("[")), key+"");
                         break;
                     }
                 }
@@ -443,8 +456,15 @@ public class NFA {
             StringTokenizer stateSt = new StringTokenizer(state);
             String eventType = stateSt.nextToken().trim();
             String stateTag = stateSt.nextToken().trim();
-            nameMap.put((char) ('a' + i), stateTag);
-            orderMap.put(stateTag, 0);
+
+            if(stateTag.contains("[")){
+                nameMap.put((char) ('a' + i), stateTag.substring(0,stateTag.indexOf("[")));
+                orderMap.put(stateTag.substring(0,stateTag.indexOf("[")), 0);
+            }
+            else{
+                orderMap.put(stateTag, 0);
+                nameMap.put((char) ('a' + i), stateTag);
+            }
             if (eventType.contains("+")) {
                 isKleeneClosure = true;
                 eventType = eventType.substring(0, eventType.length() - 1);// the first letter

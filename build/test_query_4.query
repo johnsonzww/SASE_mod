@@ -1,0 +1,10 @@
+PATTERN (STOCK e_a, STOCK e_b, STOCK e_c, STOCK e_d)
+WHERE skip-till-next-match
+HAVING before(e_a,e_b)
+HAVING overlaps(e_b,e_c)
+HAVING before(e_c,e_d)
+AND e_a.symbol = 1
+AND e_b.symbol = 2
+AND e_c.symbol = 2
+AND e_d.symbol = 1
+WITHIN 600
